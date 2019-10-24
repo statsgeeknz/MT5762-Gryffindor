@@ -1,114 +1,120 @@
 if(!require(corrplot))
   install.packages("corrplot")
+if(!require(car))
+  install.packages("car")
+if(!require(MuMIn))
+  install.packages("MuMIn")
 
 library(dplyr)
 library(corrplot)
 library(ggplot2)
 library(tidyr)
 library(tidyverse)
+library(car)
+library(MuMIn)
 
 # load data into R and generate summary
-data <- read.csv("C:/Users/checo/Documents/babies23.data", sep = "")
+babydata <- read.csv("babies23.data", sep = "")
 
-summary(data)
+summary(babydata)
 
 # rename variable wt.1 to wt_mother
-data <- data %>% rename(wt_mother = wt.1)
+babydata <- babydata %>% rename(wt_mother = wt.1)
 
 # check data for unknown values
-data %>% filter(sex == 9)
-data %>% filter(wt == 999)
-data %>% filter(parity == 99)
-data %>% filter(race == 99)
-data %>% filter(age == 99)
-data %>% filter(ed == 9)
-data %>% filter(ht == 99)
-data %>% filter(wt_mother == 999)
-data %>% filter(drace == 99)
-data %>% filter(dage == 99)
-data %>% filter(ded == 9)
-data %>% filter(dht == 99)
-data %>% filter(dwt == 999)
-data %>% filter(inc == 98 | inc == 99)
-data %>% filter(smoke == 9)
-data %>% filter(time == 9 | time == 98 | time == 99)
-data %>% filter(number == 9 | number == 98 | number == 99)
-data %>% filter(gestation == 999)
+babydata %>% filter(sex == 9)
+babydata %>% filter(wt == 999)
+babydata %>% filter(parity == 99)
+babydata %>% filter(race == 99)
+babydata %>% filter(age == 99)
+babydata %>% filter(ed == 9)
+babydata %>% filter(ht == 99)
+babydata %>% filter(wt_mother == 999)
+babydata %>% filter(drace == 99)
+babydata %>% filter(dage == 99)
+babydata %>% filter(ded == 9)
+babydata %>% filter(dht == 99)
+babydata %>% filter(dwt == 999)
+babydata %>% filter(inc == 98 | inc == 99)
+babydata %>% filter(smoke == 9)
+babydata %>% filter(time == 9 | time == 98 | time == 99)
+babydata %>% filter(number == 9 | number == 98 | number == 99)
+babydata %>% filter(gestation == 999)
 
 # update the data with NAs for unknown values
-#data$sex[data$sex == 9] = NA
-data$wt[data$wt == 999] = NA
-data$parity[data$parity == 99] = NA
-data$race[data$race == 99] = NA
-data$age[data$age == 99] = NA
-data$ed[data$ed == 9] = NA
-data$ht[data$ht == 99] = NA
-data$wt_mother[data$wt_mother == 999] = NA
-data$drace[data$drace == 99] = NA
-data$dage[data$dage == 99] = NA
-data$ded[data$ded == 9] = NA
-data$dht[data$dht == 99] = NA
-data$dwt[data$dwt == 999] = NA
-data$inc[data$inc == 98 | data$inc == 99] = NA
-#data$smoke[data$smoke == 9] = NA
-#data$time[data$time == 9 | data$time == 98 | data$time == 99] = NA
-#data$number[data$number == 9 | data$number == 98 | data$number == 99] = NA
-data$gestation[data$gestation == 999] = NA
-data$marital[data$marital == 0] = NA
+#babydata$sex[babydata$sex == 9] = NA
+babydata$wt[babydata$wt == 999] = NA
+babydata$parity[babydata$parity == 99] = NA
+babydata$race[babydata$race == 99] = NA
+babydata$age[babydata$age == 99] = NA
+babydata$ed[babydata$ed == 9] = NA
+babydata$ht[babydata$ht == 99] = NA
+babydata$wt_mother[babydata$wt_mother == 999] = NA
+babydata$drace[babydata$drace == 99] = NA
+babydata$dage[babydata$dage == 99] = NA
+babydata$ded[babydata$ded == 9] = NA
+babydata$dht[babydata$dht == 99] = NA
+babydata$dwt[babydata$dwt == 999] = NA
+babydata$inc[babydata$inc == 98 | babydata$inc == 99] = NA
+#babydata$smoke[babydata$smoke == 9] = NA
+#babydata$time[babydata$time == 9 | babydata$time == 98 | babydata$time == 99] = NA
+#babydata$number[babydata$number == 9 | babydata$number == 98 | babydata$number == 99] = NA
+babydata$gestation[babydata$gestation == 999] = NA
+babydata$marital[babydata$marital == 0] = NA
 
 # changing the race to 5 for values 0 to 5
-data$race[data$race %in% 0:5] = 5
-data$drace[data$drace %in% 0:5] = 5
+babydata$race[babydata$race %in% 0:5] = 5
+babydata$drace[babydata$drace %in% 0:5] = 5
 
 # changing the education value to 6 for values 6 & 7
-data$ed[data$ed %in% c(6, 7)] = 6
-data$ded[data$ded %in% c(6, 7)] = 6
+babydata$ed[babydata$ed %in% c(6, 7)] = 6
+babydata$ded[babydata$ded %in% c(6, 7)] = 6
 
 # changing the date value to datatype date from integer, where 1096 is January1,1961
-data$date <- as.Date(data$date, origin = "1958-01-01")
+babydata$date <- as.Date(babydata$date, origin = "1958-01-01")
 
 
 #------unit transformation------
 #oz to kg (babies)
 oz <- 0.02834
-data$wt <- data$wt * oz
+babydata$wt <- babydata$wt * oz
 #lb to kg (mothers and fathers)
 lb <- 0.4536
-data$wt_mother <- data$wt_mother *lb
-data$dwt <- data$dwt *lb
+babydata$wt_mother <- babydata$wt_mother *lb
+babydata$dwt <- babydata$dwt *lb
 #endOfUnitTransformation
 
 
 # convert all the categorical variable to factors with given lables
-data$smoke <- factor(data$smoke, 
+babydata$smoke <- factor(babydata$smoke, 
                      levels = c(0, 1, 2, 3, 9), 
                      labels = c("Never", "Smokes Now", "Until current pregnancy", "Once did, not now", "unknown"))
-data$time <- factor(data$time, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
+babydata$time <- factor(babydata$time, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
                     labels = c("never smoked", "still smokes", "during current preg.", "within 1yr", "1-2 yrs ago", "2-3 yrs ago", "3-4 yrs ago",
                                "5-9 yrs ago", "10+ yrs ago", "quit & dont know", "unknown", "not asked"))
-data$inc <- factor(data$inc, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), 
+babydata$inc <- factor(babydata$inc, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), 
                    labels = c("under 2500", "2500-4999", "5000-7499", "7500-9999", "10000-12499", 
                               "12500-14999", "15000-17499", "17500-19999", "20000-22499", "22500+"))
-data$marital <- factor(data$marital, levels = c(1, 2, 3, 4, 5), labels = c("married", "legally separated", "divorced", "widowed", "never married"))
-data$ded <- factor(data$ded, levels = c(0, 1, 2, 3, 4, 5, 6), 
+babydata$marital <- factor(babydata$marital, levels = c(1, 2, 3, 4, 5), labels = c("married", "legally separated", "divorced", "widowed", "never married"))
+babydata$ded <- factor(babydata$ded, levels = c(0, 1, 2, 3, 4, 5, 6), 
                    labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", "HS + some college", 
                               "College graduate", "Trade school(unclear HS)"))
-data$ed <- factor(data$ed, levels = c(0, 1, 2, 3, 4, 5, 6), 
+babydata$ed <- factor(babydata$ed, levels = c(0, 1, 2, 3, 4, 5, 6), 
                    labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", "HS + some college", 
                               "College graduate", "Trade school(unclear HS)"))
-data$race <- factor(data$race, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
-data$drace <- factor(data$drace, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
-data$sex <- factor(data$sex, levels = c(1, 2, 9), labels = c("male", "female", "unknown"))
-data$number <- factor(data$number, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
+babydata$race <- factor(babydata$race, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
+babydata$drace <- factor(babydata$drace, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
+babydata$sex <- factor(babydata$sex, levels = c(1, 2, 9), labels = c("male", "female", "unknown"))
+babydata$number <- factor(babydata$number, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
                       labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
 
 
-# generate summary of the data after the changes
-summary(data)
+# generate summary of the babydata after the changes
+summary(babydata)
 
 
 # create a subset of data with all numberic variables to be used to generate correlations
-dataFiltered <- data %>% select(gestation, wt, parity, age,wt_mother, dage,ht, dht, dwt)
+dataFiltered <- babydata %>% select(gestation, wt, parity, age,wt_mother, dage,ht, dht, dwt)
 #----correlation between numeric variables-----
 
 correlations <- cor(dataFiltered, use = "pairwise.complete.obs")
@@ -118,36 +124,55 @@ corrplot(correlations, type="upper", order="hclust", sig.level = 0.01, insig = "
 
 
 
-data %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = smoke)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-data %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-data %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = drace)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-testData_size <- floor(0.2 * nrow(data))
-
-testData_index <- sample(1:nrow(data), testData_size)
-
-testData <- data[testData_index,]
-fittedData <- data[-testData_index,]
 
 #filtering smoker moms and check the quantity of cigs smoked vs weight of babies
-dataSmoker <- data %>% filter(smoke == "Smokes Now")
+dataSmoker <- babydata %>% filter(smoke == "Smokes Now")
 dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #filtering non smoker moms and race vs weight of babies
-dataNonSmoker <- data %>% filter(smoke == "Never")
+dataNonSmoker <- babydata %>% filter(smoke == "Never")
 dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 
 
+testData_size <- floor(0.2 * nrow(babydata))
 
+testData_index <- sample(1:nrow(babydata), testData_size)
+
+testData <- babydata[testData_index,] %>% select(-sex, -id)
+fittedData <- babydata[-testData_index,] %>% select(-sex, -id)
+
+fullmodel <- lm(wt~ ., data = na.omit(fittedData), na.action = "na.fail")
+
+summary(fullmodel)
+Anova(fullmodel)
+
+model_1 <- step(fullmodel)
+
+Anova(model_1)
+vif(model_1)
+qqnorm(resid(model_1))
+shapiro.test(resid(model_1))
+
+
+model_2 <- dredge(fullmodel)
+
+Anova(model_2)
+vif(model_2)
+qqnorm(resid(model_2))
+shapiro.test(resid(model_2))
