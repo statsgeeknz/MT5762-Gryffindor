@@ -5,6 +5,11 @@ if(!require(car))
   install.packages("car")
 if(!require(MuMIn))
   install.packages("MuMIn")
+if(!require(GGally))
+  install.packages("GGally")
+if(!require(effects))
+  install.packages("effects")
+
 library(dplyr)
 library(corrplot)
 library(ggplot2)
@@ -12,6 +17,9 @@ library(tidyr)
 library(tidyverse)
 library(car)
 library(MuMIn)
+library(GGally)
+library(effects)
+library(ggpubr)
 
 #------------Loading files---------
 # load data into R and generate summary
@@ -78,11 +86,11 @@ babydata$date <- as.Date(babydata$date, origin = "1958-01-01")
 #------------Unit transformation------
 #oz to kg (babies)
 oz <- 0.02834
-data$wt <- data$wt * oz
+babydata$wt <- babydata$wt * oz
 #lb to kg (mothers and fathers)
 lb <- 0.4536
-data$wt_mother <- data$wt_mother *lb
-data$dwt <- data$dwt *lb
+babydata$wt_mother <- babydata$wt_mother *lb
+babydata$dwt <- babydata$dwt *lb
 #endOfUnitTransformation
 
 #------------Factorisation and conversion------------
@@ -156,14 +164,14 @@ babydata %>%
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 #filtering smoker moms and check the quantity of cigs smoked vs weight of babies
-dataSmoker <- data %>% 
+dataSmoker <- babydata %>% 
   filter(smoke == "Smokes Now")
 dataSmoker %>% 
   gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #filtering non smoker moms vs weight of babies coloured by income
-dataNonSmoker <- data %>% 
+dataNonSmoker <- babydata %>% 
   filter(smoke == "Never")
 dataSmoker %>% 
   gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
@@ -172,14 +180,14 @@ dataSmoker %>%
 #basically nothing changed there is no significant correlation between the variables, 
 #the information is spread everywhere.
 #filtering smoker moms and check the quantity of cigs smoked vs weight of babies
-dataSmokerUCP <- data %>% 
+dataSmokerUCP <- babydata %>% 
   filter(smoke == "Until current pregnancy")
 dataSmokerUCP %>% 
   gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #within once did not now 
-dataSmokerA1Y <- data %>% 
+dataSmokerA1Y <- babydata %>% 
   filter(smoke == "Once did, not now")
 dataSmokerA1Y %>% 
   gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
@@ -198,8 +206,9 @@ testData_index <- sample(1:nrow(babydata), testData_size)
 testData <- babydata[testData_index,] %>% select(-sex, -id)
 fittedData <- babydata[-testData_index,] %>% select(-sex, -id)
 
-#------------Models---------
+#------------Model 1---------
 
+ # Creating Model 1
 fullmodel <- lm(wt~ ., data = na.omit(fittedData), na.action = "na.fail")
 
 summary(fullmodel)
@@ -207,10 +216,40 @@ Anova(fullmodel)
 
 model_1 <- step(fullmodel)
 
+  # Model Diagnostics
 Anova(model_1)
 vif(model_1)
-qqnorm(resid(model_1))
 shapiro.test(resid(model_1))
+ncvTest(model_1)
+durbinWatsonTest(model_1)
+confint(model_1)
+
+  # Doing some plotting to test residuals
+plot(model_1, which =1:2)
+qqnorm(resid(model_1))
+hist(resid(model_1))
+  
+modelResid <- resid(model_1)
+plot(fitted(model_1),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
+
+numericOnly <- dataFiltered %>% 
+  select_if(is.numeric)
+
+ggpairs(numericOnly)
+
+  # Confidence Intervals
+race_confInt <- plot(effect(term = "race", mod = model_1))
+plot(effect(term = "gestation", mod = model_1))
+plot(effect(term = "ht", mod = model_1))
+
+corr_gestation <- ggscatter (fittedData, x = "gestation", y= "wt",
+                                      add = "reg.line", conf.int = TRUE,
+                                      cor.coef = TRUE, cor.method = "pearson")
+
+corr_gestation
+
+#------------Model 2 -----------------------------------------------------------------
+
 
 model_2 <- dredge(fullmodel)
 
