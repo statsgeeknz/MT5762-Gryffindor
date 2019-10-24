@@ -217,14 +217,14 @@ Anova(fullmodel)
 model_1 <- step(fullmodel)
 
   # Model Diagnostics
-Anova(model_1)
-vif(model_1)
-shapiro.test(resid(model_1))
-ncvTest(model_1)
-durbinWatsonTest(model_1)
-confint(model_1)
+Anova(model_1) # Significance test
+vif(model_1) # Collinearity test
+shapiro.test(resid(model_1)) # Normality Test
+ncvTest(model_1) # Error spread test
+durbinWatsonTest(model_1) # Error independence
+confint(model_1) # Looking at the confidence intervals
 
-  # Doing some plotting to test residuals
+  # Doing some plotting to test for error distribution
 plot(model_1, which =1:2)
 qqnorm(resid(model_1))
 hist(resid(model_1))
@@ -246,11 +246,9 @@ corr_gestation <- ggscatter (fittedData, x = "gestation", y= "wt",
                                       add = "reg.line", conf.int = TRUE,
                                       cor.coef = TRUE, cor.method = "pearson")
 
-corr_gestation
+
 
 #------------Model 2 -----------------------------------------------------------------
-
-
 model_2 <- dredge(fullmodel)
 
 Anova(model_2)
