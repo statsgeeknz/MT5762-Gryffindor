@@ -1,10 +1,10 @@
+#------------Libraries------
 if(!require(corrplot))
   install.packages("corrplot")
 if(!require(car))
   install.packages("car")
 if(!require(MuMIn))
   install.packages("MuMIn")
-
 library(dplyr)
 library(corrplot)
 library(ggplot2)
@@ -13,6 +13,7 @@ library(tidyverse)
 library(car)
 library(MuMIn)
 
+#------------Loading files---------
 # load data into R and generate summary
 babydata <- read.csv("babies23.data", sep = "")
 
@@ -20,7 +21,7 @@ summary(babydata)
 
 # rename variable wt.1 to wt_mother
 babydata <- babydata %>% rename(wt_mother = wt.1)
-
+#------------Filtering non relevant Information------------
 # check data for unknown values
 babydata %>% filter(sex == 9)
 babydata %>% filter(wt == 999)
@@ -74,39 +75,55 @@ babydata$ded[babydata$ded %in% c(6, 7)] = 6
 babydata$date <- as.Date(babydata$date, origin = "1958-01-01")
 
 
-#------unit transformation------
+#------------Unit transformation------
 #oz to kg (babies)
 oz <- 0.02834
-babydata$wt <- babydata$wt * oz
+data$wt <- data$wt * oz
 #lb to kg (mothers and fathers)
 lb <- 0.4536
-babydata$wt_mother <- babydata$wt_mother *lb
-babydata$dwt <- babydata$dwt *lb
+data$wt_mother <- data$wt_mother *lb
+data$dwt <- data$dwt *lb
 #endOfUnitTransformation
 
-
+#------------Factorisation and conversion------------
 # convert all the categorical variable to factors with given lables
 babydata$smoke <- factor(babydata$smoke, 
                      levels = c(0, 1, 2, 3, 9), 
-                     labels = c("Never", "Smokes Now", "Until current pregnancy", "Once did, not now", "unknown"))
-babydata$time <- factor(babydata$time, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
-                    labels = c("never smoked", "still smokes", "during current preg.", "within 1yr", "1-2 yrs ago", "2-3 yrs ago", "3-4 yrs ago",
-                               "5-9 yrs ago", "10+ yrs ago", "quit & dont know", "unknown", "not asked"))
-babydata$inc <- factor(babydata$inc, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), 
-                   labels = c("under 2500", "2500-4999", "5000-7499", "7500-9999", "10000-12499", 
+                     labels = c("Never", "Smokes Now", "Until current pregnancy", 
+                                "Once did, not now", "unknown"))
+babydata$time <- factor(babydata$time, 
+                     levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
+                     labels = c("never smoked", "still smokes", "during current preg.", "within 1yr", 
+                                "1-2 yrs ago", "2-3 yrs ago", "3-4 yrs ago", "5-9 yrs ago", 
+                                "10+ yrs ago", "quit & dont know", "unknown", "not asked"))
+babydata$inc <- factor(babydata$inc, 
+                     levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), 
+                     labels = c("under 2500", "2500-4999", "5000-7499", "7500-9999", "10000-12499", 
                               "12500-14999", "15000-17499", "17500-19999", "20000-22499", "22500+"))
-babydata$marital <- factor(babydata$marital, levels = c(1, 2, 3, 4, 5), labels = c("married", "legally separated", "divorced", "widowed", "never married"))
-babydata$ded <- factor(babydata$ded, levels = c(0, 1, 2, 3, 4, 5, 6), 
-                   labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", "HS + some college", 
-                              "College graduate", "Trade school(unclear HS)"))
-babydata$ed <- factor(babydata$ed, levels = c(0, 1, 2, 3, 4, 5, 6), 
-                   labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", "HS + some college", 
-                              "College graduate", "Trade school(unclear HS)"))
-babydata$race <- factor(babydata$race, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
-babydata$drace <- factor(babydata$drace, levels = c(5, 6, 7, 8, 9), labels = c("White", "Mex", "Black", "Asian", "mixed"))
-babydata$sex <- factor(babydata$sex, levels = c(1, 2, 9), labels = c("male", "female", "unknown"))
-babydata$number <- factor(babydata$number, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
-                      labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
+babydata$marital <- factor(babydata$marital, 
+                     levels = c(1, 2, 3, 4, 5), 
+                     labels = c("married", "legally separated", "divorced", "widowed", "never married"))
+babydata$ded <- factor(babydata$ded, 
+                     levels = c(0, 1, 2, 3, 4, 5, 6), 
+                     labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", 
+                                "HS + some college", "College graduate", "Trade school(unclear HS)"))
+babydata$ed <- factor(babydata$ed, 
+                     levels = c(0, 1, 2, 3, 4, 5, 6), 
+                     labels = c("< 8th grade", "8-12th grade(not grad)", "HS graduate", "HS + trade", 
+                                "HS + some college", "College graduate", "Trade school(unclear HS)"))
+babydata$race <- factor(babydata$race, 
+                     levels = c(5, 6, 7, 8, 9), 
+                     labels = c("White", "Mex", "Black", "Asian", "mixed"))
+babydata$drace <- factor(babydata$drace, 
+                     levels = c(5, 6, 7, 8, 9), 
+                     labels = c("White", "Mex", "Black", "Asian", "mixed"))
+babydata$sex <- factor(babydata$sex, 
+                     levels = c(1, 2, 9), 
+                     labels = c("male", "female", "unknown"))
+babydata$number <- factor(babydata$number, 
+                     levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
+                     labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
+                                "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
 
 
 # generate summary of the babydata after the changes
@@ -115,39 +132,63 @@ summary(babydata)
 
 # create a subset of data with all numberic variables to be used to generate correlations
 dataFiltered <- babydata %>% select(gestation, wt, parity, age,wt_mother, dage,ht, dht, dwt)
-#----correlation between numeric variables-----
+#------------Correlation between numeric variables-----
 
 correlations <- cor(dataFiltered, use = "pairwise.complete.obs")
 correlations <- round(correlations, 2)
 
 corrplot(correlations, type="upper", order="hclust", sig.level = 0.01, insig = "blank", diag = FALSE)
 
-
-
-babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+#------------Plotting and looking for correlations------------
+babydata %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = smoke)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+babydata %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-babydata %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+babydata %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = drace)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
-
 #filtering smoker moms and check the quantity of cigs smoked vs weight of babies
-dataSmoker <- babydata %>% filter(smoke == "Smokes Now")
-dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+dataSmoker <- data %>% 
+  filter(smoke == "Smokes Now")
+dataSmoker %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
-#filtering non smoker moms and race vs weight of babies
-dataNonSmoker <- babydata %>% filter(smoke == "Never")
-dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
-  ggplot(aes(x = value, y = wt, colour = race)) +
+#filtering non smoker moms vs weight of babies coloured by income
+dataNonSmoker <- data %>% 
+  filter(smoke == "Never")
+dataSmoker %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = inc)) +
+  geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
+#basically nothing changed there is no significant correlation between the variables, 
+#the information is spread everywhere.
+#filtering smoker moms and check the quantity of cigs smoked vs weight of babies
+dataSmokerUCP <- data %>% 
+  filter(smoke == "Until current pregnancy")
+dataSmokerUCP %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = number)) +
+  geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
+#within once did not now 
+dataSmokerA1Y <- data %>% 
+  filter(smoke == "Once did, not now")
+dataSmokerA1Y %>% 
+  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
+#endOfPlotting
+
+#------------Test of datasets---------------
 
 
 testData_size <- floor(0.2 * nrow(babydata))
@@ -156,6 +197,8 @@ testData_index <- sample(1:nrow(babydata), testData_size)
 
 testData <- babydata[testData_index,] %>% select(-sex, -id)
 fittedData <- babydata[-testData_index,] %>% select(-sex, -id)
+
+#------------Models---------
 
 fullmodel <- lm(wt~ ., data = na.omit(fittedData), na.action = "na.fail")
 
@@ -168,7 +211,6 @@ Anova(model_1)
 vif(model_1)
 qqnorm(resid(model_1))
 shapiro.test(resid(model_1))
-
 
 model_2 <- dredge(fullmodel)
 
