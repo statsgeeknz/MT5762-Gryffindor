@@ -210,6 +210,7 @@ fittedData <- babydata[-testData_index,] %>% select(-sex, -id)
 
  # Creating Model 1
 fullmodel <- lm(wt~ ., data = na.omit(fittedData), na.action = "na.fail")
+formula(fullmodel)
 
 summary(fullmodel)
 Anova(fullmodel)
@@ -247,11 +248,31 @@ corr_gestation <- ggscatter (fittedData, x = "gestation", y= "wt",
                                       cor.coef = TRUE, cor.method = "pearson")
 
 
-
 #------------Model 2 -----------------------------------------------------------------
-model_2 <- dredge(fullmodel)
 
-Anova(model_2)
-vif(model_2)
+  # Creating model 2
+model2_initial <- lm(wt ~ 1, data= na.omit(fittedData))
+  
+  # Setting the limit of variables to fill with Formula function. 
+model_2 <- step(model2_initial, direction = "forward", scope= formula(fullmodel))
+
+
+# The results, effectively model 2 includes the race of the mother instead of the race of the father. 
+## all other explanatory variables remain the same. 
+
+# Model Diagnostics
+Anova(model_2) # Significance test
+vif(model_2) # Collinearity test
+shapiro.test(resid(model_2)) # Normality Test
+ncvTest(model_2) # Error spread test
+durbinWatsonTest(model_2) # Error independence
+confint(model_2) # Looking at the confidence intervals
+
+# Doing some plotting to test for error distribution
+par(mfrow=c(2,2))
+plot(model_2, which =1:2)
 qqnorm(resid(model_2))
-shapiro.test(resid(model_2))
+hist(resid(model_2))
+
+modelResid <- resid(model_2)
+plot(fitted(model_2),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
