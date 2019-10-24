@@ -3,9 +3,12 @@ if(!require(corrplot))
 
 library(dplyr)
 library(corrplot)
+library(ggplot2)
+library(tidyr)
+library(tidyverse)
 
 # load data into R and generate summary
-data <- read.csv("babies23.data", sep = "")
+data <- read.csv("C:/Users/checo/Documents/babies23.data", sep = "")
 
 summary(data)
 
@@ -65,6 +68,17 @@ data$ded[data$ded %in% c(6, 7)] = 6
 data$date <- as.Date(data$date, origin = "1958-01-01")
 
 
+#------unit transformation------
+#oz to kg (babies)
+oz <- 0.02834
+data$wt <- data$wt * oz
+#lb to kg (mothers and fathers)
+lb <- 0.4536
+data$wt_mother <- data$wt_mother *lb
+data$dwt <- data$dwt *lb
+#endOfUnitTransformation
+
+
 # convert all the categorical variable to factors with given lables
 data$smoke <- factor(data$smoke, 
                      levels = c(0, 1, 2, 3, 9), 
@@ -122,6 +136,17 @@ testData_index <- sample(1:nrow(data), testData_size)
 
 testData <- data[testData_index,]
 fittedData <- data[-testData_index,]
+
+#filtering smoker moms and check the quantity of cigs smoked vs weight of babies
+dataSmoker <- data %>% filter(smoke == "Smokes Now")
+dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = number)) +
+  geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
+#filtering non smoker moms and race vs weight of babies
+dataNonSmoker <- data %>% filter(smoke == "Never")
+dataSmoker %>% gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = race)) +
+  geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 
 
