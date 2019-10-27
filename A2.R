@@ -322,3 +322,33 @@ CVmodel_2 <- train(formula(model_2), data = babydata_NONA, method = "lm",
 print(CVmodel_2)
 coef(model_2)
 
+
+
+#bootstap step
+#first we need to resample the data 1000 times with replacement, and then use the 
+#new data to fit the chosen model. use quantile bootstrap to find the empirical
+#confidence intervals for the parameters
+
+nr <- dim(fittedData_NONA)[1]
+names <- names(coef(lm(formula = wt ~ gestation + parity + ht + wt_mother + drace +
+  time + number, data = fittedData_NONA)))
+newcoe <- matrix(nr = 1000, nc = 28)
+i <- 1
+while (i <= 1000) {
+  new_data <- fittedData_NONA[sample(1:nr, nr, replace = T), ]
+  newlm <- lm(formula = wt ~ gestation + parity + ht + wt_mother + drace +
+    time + number, data = new_data)
+  if (length(as.vector(coef(newlm))) == 28) {
+    newcoe[i, ] <- coef(newlm)
+    i <- i + 1
+  }
+}
+
+coninter <- matrix(nr = 28, nc = 2)
+for (i in 1:28)
+{
+  coninter[i, ] <- quantile(newcoe[, i], c(0.025, 0.975), na.rm = T)
+}
+rownames(coninter) <- names
+colnames(coninter) <- c("2.5%", "97.5%")
+coninter
