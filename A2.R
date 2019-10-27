@@ -9,6 +9,10 @@ if(!require(GGally))
   install.packages("GGally")
 if(!require(effects))
   install.packages("effects")
+if(!require(MLmetrics))
+  install.packages("MLmetrics")
+if(!require(caret))
+  install.packages("caret")
 
 library(dplyr)
 library(corrplot)
@@ -20,6 +24,8 @@ library(MuMIn)
 library(GGally)
 library(effects)
 library(ggpubr)
+library(MLmetrics)
+library(caret)
 
 #------------Loading files---------
 # load data into R and generate summary
@@ -197,19 +203,20 @@ dataSmokerA1Y %>%
 #endOfPlotting
 
 #------------Test of datasets---------------
+set.seed(123)
 
+CVData_size <- floor(0.2 * nrow(babydata))
 
-testData_size <- floor(0.2 * nrow(babydata))
+CVData_index <- sample(1:nrow(babydata), CVData_size)
 
-testData_index <- sample(1:nrow(babydata), testData_size)
-
-testData <- babydata[testData_index,] %>% select(-sex, -id)
-fittedData <- babydata[-testData_index,] %>% select(-sex, -id)
+CVData <- babydata[CVData_index,] %>% select(-sex, -id)
+fittedData <- babydata[-CVData_index,] %>% select(-sex, -id)
 
 #------------Model 1---------
 
  # Creating Model 1
-fullmodel <- lm(wt~ ., data = na.omit(fittedData), na.action = "na.fail")
+fittedData_NONA <- na.omit(fittedData)
+fullmodel <- lm(wt~ ., data = fittedData_NONA, na.action = "na.fail")
 formula(fullmodel)
 
 summary(fullmodel)
@@ -239,11 +246,11 @@ numericOnly <- dataFiltered %>%
 ggpairs(numericOnly)
 
   # Confidence Intervals
-race_confInt <- plot(effect(term = "race", mod = model_1))
+race_confInt <- plot(effect(term = "drace", mod = model_1))
 plot(effect(term = "gestation", mod = model_1))
 plot(effect(term = "ht", mod = model_1))
 
-corr_gestation <- ggscatter (fittedData, x = "gestation", y= "wt",
+corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
                                       add = "reg.line", conf.int = TRUE,
                                       cor.coef = TRUE, cor.method = "pearson")
 
@@ -251,7 +258,7 @@ corr_gestation <- ggscatter (fittedData, x = "gestation", y= "wt",
 #------------Model 2 -----------------------------------------------------------------
 
   # Creating model 2
-model2_initial <- lm(wt ~ 1, data= na.omit(fittedData))
+model2_initial <- lm(wt ~ 1, data= fittedData_NONA)
   
   # Setting the limit of variables to fill with Formula function. 
 model_2 <- step(model2_initial, direction = "forward", scope= formula(fullmodel))
@@ -276,3 +283,42 @@ hist(resid(model_2))
 
 modelResid <- resid(model_2)
 plot(fitted(model_2),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
+
+#validation ----
+
+validationData_m1 <- CVData %>% select(all.vars(formula(model_1)))
+
+validationData_m1_noNA <- na.omit(validationData_m1)
+predictions_m1 <- model_1 %>% predict(validationData_m1_noNA)
+
+mse_m1 <- MSE(predictions_m1, validationData_m1_noNA$wt)
+
+
+validationData_m2 <- CVData %>% select(all.vars(formula(model_2)))
+
+validationData_m2_noNA <- na.omit(validationData_m2)
+predictions_m2 <- model_2 %>% predict(validationData_m2_noNA)
+
+mse_m2 <- MSE(predictions_m2, validationData_m2_noNA$wt)
+
+
+# 5 fold cross validation
+babydata_NONA <- na.omit(babydata)
+set.seed(123) 
+train.control <- trainControl(method = "cv", number = 5)
+# Train the model
+CVmodel_1 <- train(formula(model_1), data = babydata_NONA, method = "lm",
+               trControl = train.control)
+# Summarize the results
+print(CVmodel_1)
+coef(model_1)
+
+set.seed(234) 
+train.control <- trainControl(method = "cv", number = 5)
+# Train the model
+CVmodel_2 <- train(formula(model_2), data = babydata_NONA, method = "lm",
+                   trControl = train.control)
+# Summarize the results
+print(CVmodel_2)
+coef(model_2)
+
