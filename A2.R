@@ -203,8 +203,7 @@ dataSmokerA1Y %>%
 #endOfPlotting
 
 #------------Test of datasets---------------
-set.seed(123)
-
+set.seed(2)
 CVData_size <- floor(0.2 * nrow(babydata))
 
 CVData_index <- sample(1:nrow(babydata), CVData_size)
@@ -219,11 +218,7 @@ fittedData_NONA <- na.omit(fittedData)
 fullmodel <- lm(wt~ ., data = fittedData_NONA, na.action = "na.fail")
 formula(fullmodel)
 
-summary(fullmodel)
-Anova(fullmodel)
-
 model_1 <- step(fullmodel)
-
   # Model Diagnostics
 Anova(model_1) # Significance test
 vif(model_1) # Collinearity test
@@ -236,7 +231,6 @@ confint(model_1) # Looking at the confidence intervals
 plot(model_1, which =1:2)
 qqnorm(resid(model_1))
 hist(resid(model_1))
-  
 modelResid <- resid(model_1)
 plot(fitted(model_1),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
 
@@ -259,7 +253,7 @@ corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
 
   # Creating model 2
 model2_initial <- lm(wt ~ 1, data= fittedData_NONA)
-  
+
   # Setting the limit of variables to fill with Formula function. 
 model_2 <- step(model2_initial, direction = "forward", scope= formula(fullmodel))
 
@@ -324,7 +318,9 @@ coef(model_2)
 
 
 
-#bootstap step
+
+# Bootstrap ---------------------------------------------------------------
+
 #first we need to resample the data 1000 times with replacement, and then use the 
 #new data to fit the chosen model. use quantile bootstrap to find the empirical
 #confidence intervals for the parameters
