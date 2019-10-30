@@ -15,6 +15,7 @@ if(!require(caret))
   install.packages("caret")
 
 library(dplyr)
+library(car)
 library(corrplot)
 library(ggplot2)
 library(tidyr)
@@ -139,7 +140,6 @@ babydata$number <- factor(babydata$number,
                      labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
                                 "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
 
-
 # generate summary of the babydata after the changes
 summary(babydata)
 
@@ -216,7 +216,6 @@ fittedData <- babydata[-CVData_index,] %>% select(-sex, -id)
  # Creating Model 1
 fittedData_NONA <- na.omit(fittedData)
 fullmodel <- lm(wt~ ., data = fittedData_NONA, na.action = "na.fail")
-formula(fullmodel)
 
 model_1 <- step(fullmodel)
   # Model Diagnostics
@@ -238,9 +237,9 @@ numericOnly <- dataFiltered %>%
   select_if(is.numeric)
 
 ggpairs(numericOnly)
-
   # Confidence Intervals
-race_confInt <- plot(effect(term = "drace", mod = model_1))
+race_confInt <- plot(effect(term = "race", mod = model_1))
+race_confInt
 plot(effect(term = "gestation", mod = model_1))
 plot(effect(term = "ht", mod = model_1))
 
@@ -250,16 +249,13 @@ corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
 
 
 #------------Model 2 -----------------------------------------------------------------
-
-  # Creating model 2
+ # Creating model 2
 model2_initial <- lm(wt ~ 1, data= fittedData_NONA)
+model_2Updated <- update(model2_initial, .~. +race +wt_mother +dwt +smoke + gestation + parity +ht)
+model_2 <- model_2Updated
 
-  # Setting the limit of variables to fill with Formula function. 
-model_2 <- step(model2_initial, direction = "forward", scope= formula(fullmodel))
-
-
-# The results, effectively model 2 includes the race of the mother instead of the race of the father. 
-## all other explanatory variables remain the same. 
+# The results, effectively model 2 includes the weights of father and mother
+## also adds smoke factor. removes dad's height and number of cigaretts. 
 
 # Model Diagnostics
 Anova(model_2) # Significance test
@@ -277,7 +273,6 @@ hist(resid(model_2))
 
 modelResid <- resid(model_2)
 plot(fitted(model_2),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
-
 #validation ----
 
 validationData_m1 <- CVData %>% select(all.vars(formula(model_1)))
