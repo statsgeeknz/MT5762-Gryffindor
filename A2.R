@@ -321,22 +321,17 @@ coef(model_2)
 #confidence intervals for the parameters
 
 nr <- dim(fittedData_NONA)[1]
-names <- names(coef(lm(formula = wt ~ gestation + parity + ht + wt_mother + drace +
-  time + number, data = fittedData_NONA)))
-newcoe <- matrix(nr = 1000, nc = 28)
-i <- 1
-while (i <= 1000) {
+names <- names(coef(lm(model_2, data = fittedData_NONA)))
+newcoe <- matrix(nr = 1000, nc = 14)
+set.seed(0702)
+for (i in 1:1000) {
   new_data <- fittedData_NONA[sample(1:nr, nr, replace = T), ]
-  newlm <- lm(formula = wt ~ gestation + parity + ht + wt_mother + drace +
-    time + number, data = new_data)
-  if (length(as.vector(coef(newlm))) == 28) {
-    newcoe[i, ] <- coef(newlm)
-    i <- i + 1
-  }
+  newlm <- lm(model_2, data = new_data)
+  newcoe[i, ] <- coef(newlm)
 }
 
-coninter <- matrix(nr = 28, nc = 2)
-for (i in 1:28)
+coninter <- matrix(nr = 14, nc = 2)
+for (i in 1:14)
 {
   coninter[i, ] <- quantile(newcoe[, i], c(0.025, 0.975), na.rm = T)
 }
