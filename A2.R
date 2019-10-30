@@ -139,13 +139,14 @@ babydata$number <- factor(babydata$number,
                      levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
                      labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
                                 "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
-
+babydata$parity <- factor(babydata$parity)
+glimpse(babydata_NONA)
 # generate summary of the babydata after the changes
 summary(babydata)
 
 
 # create a subset of data with all numberic variables to be used to generate correlations
-dataFiltered <- babydata %>% select(gestation, wt, parity, age,wt_mother, dage,ht, dht, dwt)
+dataFiltered <- babydata %>% select(gestation, wt, age,wt_mother, dage,ht, dht, dwt)
 #------------Correlation between numeric variables-----
 
 correlations <- cor(dataFiltered, use = "pairwise.complete.obs")
@@ -155,17 +156,17 @@ corrplot(correlations, type="upper", order="hclust", sig.level = 0.01, insig = "
 
 #------------Plotting and looking for correlations------------
 babydata %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = smoke)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 babydata %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 babydata %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = drace)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
@@ -173,31 +174,32 @@ babydata %>%
 dataSmoker <- babydata %>% 
   filter(smoke == "Smokes Now")
 dataSmoker %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #filtering non smoker moms vs weight of babies coloured by income
 dataNonSmoker <- babydata %>% 
   filter(smoke == "Never")
 dataSmoker %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
-  ggplot(aes(x = value, y = wt, colour = inc)) +
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #basically nothing changed there is no significant correlation between the variables, 
 #the information is spread everywhere.
+
 #filtering smoker moms and check the quantity of cigs smoked vs weight of babies
 dataSmokerUCP <- babydata %>% 
   filter(smoke == "Until current pregnancy")
 dataSmokerUCP %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
   ggplot(aes(x = value, y = wt, colour = number)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 #within once did not now 
 dataSmokerA1Y <- babydata %>% 
   filter(smoke == "Once did, not now")
 dataSmokerA1Y %>% 
-  gather(gestation, parity, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
-  ggplot(aes(x = value, y = wt, colour = number)) +
+  gather(gestation, age, wt_mother, ht, dage, dwt, dht, key = "param", value = "value") %>%
+  ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
 #endOfPlotting
@@ -264,6 +266,9 @@ shapiro.test(resid(model_2)) # Normality Test
 ncvTest(model_2) # Error spread test
 durbinWatsonTest(model_2) # Error independence
 confint(model_2) # Looking at the confidence intervals
+AIC(model_1)
+AIC(model_2)
+
 
 # Doing some plotting to test for error distribution
 par(mfrow=c(2,2))
