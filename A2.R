@@ -140,7 +140,7 @@ babydata$number <- factor(babydata$number,
                      labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
                                 "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
 babydata$parity <- factor(babydata$parity)
-glimpse(babydata_NONA)
+#glimpse(babydata_NONA)
 # generate summary of the babydata after the changes
 summary(babydata)
 
