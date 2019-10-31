@@ -139,7 +139,7 @@ babydata$number <- factor(babydata$number,
                      levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 98, 99), 
                      labels = c("never", "1-4", "5-9", "10-14", "15-19", "20-29", "30-39", 
                                 "40-60", "60+", "smoke but dont know", "unknown", "not asked"))
-babydata$parity <- factor(babydata$parity)
+
 #glimpse(babydata_NONA)
 # generate summary of the babydata after the changes
 summary(babydata)
@@ -220,6 +220,7 @@ fittedData_NONA <- na.omit(fittedData)
 fullmodel <- lm(wt~ ., data = fittedData_NONA, na.action = "na.fail")
 
 model_1 <- step(fullmodel)
+
   # Model Diagnostics
 Anova(model_1) # Significance test
 vif(model_1) # Collinearity test
@@ -229,26 +230,36 @@ durbinWatsonTest(model_1) # Error independence
 confint(model_1) # Looking at the confidence intervals
 
   # Doing some plotting to test for error distribution
+par(mfrow=c(3,2))
 plot(model_1, which =1:2)
 qqnorm(resid(model_1))
 hist(resid(model_1))
 modelResid <- resid(model_1)
 plot(fitted(model_1),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
 
+  # Plotting the residual distribution per covariate
+par(mfrow=c(3,2))
+termplot(model_1, se=TRUE)
+
+  # Plotting the partial residual distribution per covariate
+par(mfrow=c(3,2))
+termplot(model_1, se=TRUE, partial.resid = TRUE)
+
+
+  # Correlation plots
 numericOnly <- dataFiltered %>% 
   select_if(is.numeric)
 
 ggpairs(numericOnly)
+
   # Confidence Intervals
-race_confInt <- plot(effect(term = "race", mod = model_1))
-race_confInt
-plot(effect(term = "gestation", mod = model_1))
-plot(effect(term = "ht", mod = model_1))
+plot(effect(term = "number", mod = model_1))
+plot(effect(term = "race", mod = model_1))
 
 corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
                                       add = "reg.line", conf.int = TRUE,
                                       cor.coef = TRUE, cor.method = "pearson")
-
+corr_gestation
 
 #------------Model 2 -----------------------------------------------------------------
  # Creating model 2
@@ -266,19 +277,28 @@ shapiro.test(resid(model_2)) # Normality Test
 ncvTest(model_2) # Error spread test
 durbinWatsonTest(model_2) # Error independence
 confint(model_2) # Looking at the confidence intervals
-AIC(model_1)
-AIC(model_2)
-
 
 # Doing some plotting to test for error distribution
+modelResid <- resid(model_2)
+
 par(mfrow=c(2,2))
 plot(model_2, which =1:2)
 qqnorm(resid(model_2))
 hist(resid(model_2))
 
-modelResid <- resid(model_2)
-plot(fitted(model_2),modelResid, ylab = 'residuals', xlab = 'Fitted Values')
-#validation ----
+# Plotting the residual distribution per covariate
+par(mfrow=c(3,3))
+termplot(model_2, se=TRUE)
+
+# Plotting the partial residual distribution per covariate
+par(mfrow=c(3,3))
+termplot(model_2, se=TRUE, partial.resid = TRUE)
+
+  # Deciding between models
+AIC(model_1)
+AIC(model_2)
+
+# validation ----
 
 validationData_m1 <- CVData %>% select(all.vars(formula(model_1)))
 
@@ -343,3 +363,6 @@ for (i in 1:14)
 rownames(coninter) <- names
 colnames(coninter) <- c("2.5%", "97.5%")
 coninter
+
+cooks.distance(model_2)
+plot(modelResid)
