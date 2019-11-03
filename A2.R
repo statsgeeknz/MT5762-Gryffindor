@@ -202,6 +202,13 @@ dataSmokerA1Y %>%
   ggplot(aes(x = value, y = wt, colour = race)) +
   geom_point() + facet_wrap(~param, scales = "free") + theme_bw()
 
+
+# Correlation plots
+numericOnly <- dataFiltered %>% 
+  select_if(is.numeric)
+
+ggpairs(numericOnly)
+
 #endOfPlotting
 
 #------------Test of datasets---------------
@@ -246,20 +253,18 @@ par(mfrow=c(3,2))
 termplot(model_1, se=TRUE, partial.resid = TRUE)
 
 
-  # Correlation plots
-numericOnly <- dataFiltered %>% 
-  select_if(is.numeric)
-
-ggpairs(numericOnly)
-
-  # Confidence Intervals
-plot(effect(term = "number", mod = model_1))
+  # effect plots for the model
+plot(effect(term = "gestation", mod = model_1))
+plot(effect(term = "parity", mod = model_1))
 plot(effect(term = "race", mod = model_1))
+plot(effect(term = "ht", mod = model_1))
+plot(effect(term = "dht", mod = model_1))
+plot(effect(term = "number", mod = model_1))
 
-corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
-                                      add = "reg.line", conf.int = TRUE,
-                                      cor.coef = TRUE, cor.method = "pearson")
-corr_gestation
+#corr_gestation <- ggscatter (fittedData_NONA, x = "gestation", y= "wt",
+ #                                     add = "reg.line", conf.int = TRUE,
+  #                                    cor.coef = TRUE, cor.method = "pearson")
+#corr_gestation
 
 #------------Model 2 -----------------------------------------------------------------
  # Creating model 2
@@ -294,9 +299,19 @@ termplot(model_2, se=TRUE)
 par(mfrow=c(3,3))
 termplot(model_2, se=TRUE, partial.resid = TRUE)
 
-  # Deciding between models
-AIC(model_1)
-AIC(model_2)
+# effect plots for the model
+plot(effect(term = "race", mod = model_2))
+plot(effect(term = "wt_mother", mod = model_2))
+plot(effect(term = "dwt", mod = model_2))
+plot(effect(term = "smoke", mod = model_2))
+plot(effect(term = "gestation", mod = model_2))
+plot(effect(term = "parity", mod = model_2))
+plot(effect(term = "ht", mod = model_2))
+
+  # Deciding between models based on AIC
+AIC(model_1, model_2)
+
+
 
 # validation ----
 
@@ -315,6 +330,7 @@ predictions_m2 <- model_2 %>% predict(validationData_m2_noNA)
 
 mse_m2 <- MSE(predictions_m2, validationData_m2_noNA$wt)
 
+cat(paste(mse_m1, mse_m2, sep = "\n"))
 
 # 5 fold cross validation
 babydata_NONA <- na.omit(babydata)
